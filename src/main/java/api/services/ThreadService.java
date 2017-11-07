@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+import java.util.List;
+
 @Repository
 public class ThreadService {
     private JdbcTemplate jdbcTemplate;
@@ -35,5 +37,31 @@ public class ThreadService {
                 forum, user, thread.getSlug(), thread.getCreated(),   
                 thread.getMessage(), thread.getTitle()
         );
+    }
+
+    public List<Thread> getThreads(String slug, boolean desc, Integer limit, String since) {
+        StringBuilder mquery = new StringBuilder();
+        mquery.append("SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE lower(t.forum) = lower(?) ");
+
+        
+
+        if(since != null) {
+            if(desc) {
+                mquery.append("AND t.created <= '").append(since).append("'::TIMESTAMPTZ ");
+            } else if (!desc) {
+                mquery.append("AND t.created >= '").append(since).append("'::TIMESTAMPTZ ");
+            }
+        }
+
+        if(desc) {
+            mquery.append("ORDER BY t.created DESC ");
+        } else if(!desc) {
+            mquery.append("ORDER BY t.created ASC ");           
+        }
+
+        mquery.append("LIMIT (?)");
+        
+
+        return this.jdbcTemplate.query(mquery.toString(), ThreadList, slug, limit);
     }
 }

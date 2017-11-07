@@ -2,8 +2,10 @@ package api.controllers;
 
 import api.models.Forum;
 import api.models.User;
+import api.models.Thread;
 import api.services.ForumService;
 import api.services.UserService;
+import api.services.ThreadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -18,12 +20,13 @@ import java.util.List;
 public class ForumController {
     final ForumService forumService;
     final UserService userService;
-
+    final ThreadService threadService;
 
     @Autowired
-    public ForumController(ForumService forumService, UserService userService) {
+    public ForumController(ForumService forumService, UserService userService, ThreadService threadService) {
         this.forumService = forumService;
         this.userService = userService;
+        this.threadService = threadService;
     }
 
 
@@ -51,5 +54,18 @@ public class ForumController {
         }
     }
 
+    @GetMapping("/{slug}/threads")
+    public ResponseEntity<?> getForumThreads(@PathVariable String slug, 
+                                             @RequestParam(value="desc", defaultValue="false") boolean desc,
+                                             @RequestParam(value="limit", defaultValue="100") Integer limit, 
+                                             @RequestParam(value="since", required=false) String since) {
+        try {
+            String foundslug = forumService.getSlug(slug);
+            List<Thread> foundThreads = this.threadService.getThreads(foundslug, desc, limit, since);
+            return ResponseEntity.ok(foundThreads);
+        } catch (EmptyResultDataAccessException err) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("Not found such forum"));
+        }
+    }
 
 }

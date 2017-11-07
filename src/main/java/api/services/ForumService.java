@@ -36,4 +36,12 @@ public class ForumService {
     );
     }
 
+    public String getSlug(String slug) {
+        return this.jdbcTemplate.queryForObject(
+                    "SELECT f.slug FROM forums f WHERE lower(f.slug) = lower(?)",
+                    String.class,
+                    slug
+        );
+    }
+
 }
