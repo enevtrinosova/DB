@@ -73,12 +73,13 @@ public class ForumController {
         try {
             Forum getForum = forumService.getInf(forum);
             User getUser = userService.getInf(thread.getAuthor());
-            thread = threadService.create(getForum.getSlug(), thread, getUser.getNickname());
-            thread.setAuthor(getUser.getNickname());
-            thread.setForum(getForum.getSlug());
-            return ResponseEntity.status(HttpStatus.CREATED).body(thread);
+            Thread newThread = threadService.create(getForum.getSlug(), thread, getUser.getNickname());
+            newThread.setAuthor(getUser.getNickname());
+            newThread.setForum(getForum.getSlug());
+            return ResponseEntity.status(HttpStatus.CREATED).body(newThread);
         } catch (DuplicateKeyException err) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("");
+            Thread similarUser = threadService.getThreadBySlugOrId(threadService.getThreadSlug(thread.getSlug()));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(similarUser);
         } catch (EmptyResultDataAccessException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("This forum not found"));
         }

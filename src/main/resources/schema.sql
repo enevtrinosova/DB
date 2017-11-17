@@ -31,7 +31,7 @@ CREATE TABLE "threads" (
   "id" serial NOT NULL,
   "forum" CITEXT,
   "author" CITEXT,
-  "slug" CITEXT,
+  "slug" CITEXT UNIQUE,
   "created" TIMESTAMPTZ,
   "message" CITEXT,
   "title" CITEXT,

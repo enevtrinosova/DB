@@ -80,4 +80,12 @@ public class ThreadService {
 
         return this.jdbcTemplate.query(mquery.toString(), ThreadList, slug, limit);
     }
+
+    public String getThreadSlug(String slug) {
+                return this.jdbcTemplate.queryForObject(
+                    "SELECT t.slug FROM threads t WHERE lower(t.slug) = lower(?)",
+                    String.class,
+                    slug
+        );
+    }
 }
