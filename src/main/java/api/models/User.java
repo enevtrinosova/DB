@@ -78,13 +78,4 @@ public class User implements RowMapper<User> {
                 resultSet.getString("about")
         );
     }
-
-    //    @JsonCreator
-//    public User(@JsonProperty("nickname") @Nullable String nickname, @JsonProperty("fullname") String fullname,
-//                @JsonProperty("email") String email, @JsonProperty("about") String about) {
-//        this.nickname = nickname;
-//        this.email = email;
-//        this.fullname = fullname;
-//        this.about = about;
-//    }
 }

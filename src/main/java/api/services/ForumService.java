@@ -29,7 +29,7 @@ public class ForumService {
 
     public Forum getInf(String slug) {
         return this.jdbcTemplate.queryForObject(
-                    "SELECT slug, title, \"user\", posts, threads FROM forums AS f " +
+                    "SELECT slug, title, \"user\", posts, threads FROM forums f " +
                     "WHERE lower(f.slug) = lower(?) LIMIT 1",
             new Forum(),
             slug

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Thread {
 
-    private long id;
+    private Long id;
     private String forum;
     private String author;
     private String slug;
@@ -15,7 +15,7 @@ public class Thread {
     private long votes;
 
     @JsonCreator
-    public Thread(@JsonProperty("id") long id, @JsonProperty("forum")String forum, @JsonProperty("author")String author, 
+    public Thread(@JsonProperty("id") Long id, @JsonProperty("forum")String forum, @JsonProperty("author")String author, 
                   @JsonProperty("slug")String slug, @JsonProperty("created")String created, 
                   @JsonProperty("message")String message, 
                   @JsonProperty("title")String title, @JsonProperty("votes")long votes) {
@@ -34,11 +34,11 @@ public class Thread {
 
     public Thread() {}
 
-    public long getid() {
+    public Long getid() {
         return id;
     }
 
-    public void setiD(long id) {
+    public void setid(Long id) {
         this.id = id;
     }
 

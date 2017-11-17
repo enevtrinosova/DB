@@ -42,15 +42,15 @@ OIDS=FALSE
 );
 
 CREATE TABLE "posts" (
-  "pID" serial NOT NULL,
+  "id" serial NOT NULL,
   "forum" CITEXT,
   "author" CITEXT,
   "created" TIMESTAMPTZ ,
-  "isEddited" BOOLEAN,
-  "threads" BIGINT ,
+  "iseddited" BOOLEAN,
+  "thread" BIGINT ,
   "message" CITEXT,
   "parent" BIGINT,
-  CONSTRAINT posts_pk PRIMARY KEY ("pID")
+  CONSTRAINT posts_pk PRIMARY KEY ("id")
 ) WITH (
 OIDS=FALSE
 );

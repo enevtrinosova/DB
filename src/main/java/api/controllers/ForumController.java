@@ -68,4 +68,20 @@ public class ForumController {
         }
     }
 
+    @PostMapping("/{forum}/create")
+    public ResponseEntity<?> createThread(@PathVariable String forum, @RequestBody Thread thread) {
+        try {
+            Forum getForum = forumService.getInf(forum);
+            User getUser = userService.getInf(thread.getAuthor());
+            thread = threadService.create(getForum.getSlug(), thread, getUser.getNickname());
+            thread.setAuthor(getUser.getNickname());
+            thread.setForum(getForum.getSlug());
+            return ResponseEntity.status(HttpStatus.CREATED).body(thread);
+        } catch (DuplicateKeyException err) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("");
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("This forum not found"));
+        }
+    }
+
 }

@@ -39,6 +39,22 @@ public class ThreadService {
         );
     }
 
+    public Thread getThreadBySlugOrId(String slug_or_id) {
+        if(slug_or_id.matches("\\d+")) {
+            return this.jdbcTemplate.queryForObject(
+                "SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE t.id = (?)",
+                ThreadList, 
+                Long.valueOf(slug_or_id)
+            );
+        } else {
+            return this.jdbcTemplate.queryForObject(
+                "SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE lower(t.slug) = lower(?)",
+                ThreadList, 
+                slug_or_id
+            );
+        }
+    }
+
     public List<Thread> getThreads(String slug, boolean desc, Integer limit, String since) {
         StringBuilder mquery = new StringBuilder();
         mquery.append("SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE lower(t.forum) = lower(?) ");

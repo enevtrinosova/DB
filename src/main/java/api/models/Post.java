@@ -1,22 +1,29 @@
 package api.models;
 
-/**
- * Created by evgenia on 14.10.17.
- */
-public class Post {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.jdbc.core.RowMapper;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-    private long pID;
+public class Post implements RowMapper<Post>{
+
+    private long id;
     private String author;
     private String forum;
     private String created;
     private boolean isEddited;
     private long thread;
     private String message;
-    private int parent;
+    private Long parent;
 
-    public Post(long pID, String author, String forum, String created, boolean isEddited,
-                        long thread, String message, int parent) {
-        this.pID = pID;
+    @JsonCreator
+    public Post(@JsonProperty("id")long id, @JsonProperty("author")String author, 
+                @JsonProperty("forum")String forum, @JsonProperty("created")String created, 
+                @JsonProperty("iseddited")boolean isEddited,
+                @JsonProperty("thread")long thread, @JsonProperty("message")String message, 
+                @JsonProperty("parent")Long parent) {
+        this.id = id;
         this.author = author;
         this.forum = forum;
         this.created = created;
@@ -26,12 +33,14 @@ public class Post {
         this.parent = parent;
     }
 
-    public long getpID() {
-        return pID;
+    public Post() {}
+
+    public long getid() {
+        return id;
     }
 
-    public void setpID(long pID) {
-        this.pID = pID;
+    public void setid(long id) {
+        this.id = id;
     }
 
     public String getAuthor() {
@@ -82,11 +91,25 @@ public class Post {
         this.message = message;
     }
 
-    public int getParent() {
+    public Long getParent() {
         return parent;
     }
 
-    public void setParent(int parent) {
+    public void setParent(long parent) {
         this.parent = parent;
+    }
+
+    @Override
+    public Post mapRow(ResultSet resultSet, int i) throws SQLException {
+        return new Post(
+                resultSet.getLong("id"),
+                resultSet.getString("author"),
+                resultSet.getString("forum"),
+                resultSet.getString("created"),
+                resultSet.getBoolean("isEddited"),
+                resultSet.getLong("thread"),
+                resultSet.getString("message"),
+                resultSet.getLong("parent")
+        );
     }
 }
