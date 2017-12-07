@@ -78,10 +78,13 @@ public class ThreadController {
                                       @RequestParam(value="sort", defaultValue="flat") String sort,
                                       @RequestParam(value="limit", defaultValue="100") Integer limit, 
                                       @RequestParam(value="since", required=false) String since,
-                                      @RequestParam(value="desc", required=true) boolean desc) {
+                                      @RequestParam(value="desc", required=false, defaultValue="false") boolean desc)
+                                      {
         try {
             Thread findThread = this.threadService.getThreadBySlugOrId(slug_or_id);
+            System.out.println(findThread.getid());
 
+            System.out.println(sort);
             return ResponseEntity.ok(this.postService.getPosts(findThread.getid(), sort, limit, since, desc)); 
 
         } catch(EmptyResultDataAccessException e) {

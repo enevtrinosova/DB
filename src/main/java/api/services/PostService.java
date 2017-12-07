@@ -62,7 +62,7 @@ public class PostService {
 
                     System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAA");
                     
-                    Long threadId = jdbcTemplate.queryForObject("SELECT t.id FROM threads t WHERE t.id = (?)", Long.class, curPost.getParent());
+                    Long threadId = jdbcTemplate.queryForObject("SELECT t.id FROM threads t WHERE t.id = (?)", Long.class, curPost.getThread());
                     System.out.println(threadId);
                     if(!Objects.equals(threadId, thread.getid())) {
                         throw new NoSuchElementException("");
@@ -92,35 +92,50 @@ public class PostService {
         StringBuilder mquery = new StringBuilder();
         mquery.append("SELECT p.id, p.author, p.forum, p.created, p.isEddited, p.thread, p.message, p.parent FROM posts p WHERE p.thread = (?) ");
 
-        if(since != null && sort == "flat") {
-           mquery.append("AND t.created > '").append(since).append("'::TIMESTAMPTZ ORDER BY t.created DESC ");
-        } 
+
+        if (Objects.equals(sort, "flat")) {
+            if (since != null) {
+                mquery.append("AND p.created > '").append(since).append("'::TIMESTAMPTZ ");
+            } 
+            System.out.println("desc - ");
+            System.out.println(desc);
+
+            if (desc) {
+                mquery.append("ORDER BY p.id DESC ");
+            } else if (!desc) {
+                mquery.append("ORDER BY p.id ASC ");
+            } 
+            
+        }
+       
+            
+        
 
         
 
-        if (sort == "tree") {
-            if (since != null) {
-                if (desc) {
-                    mquery.append("AND path < (SELECT p.path FROM posts p WHERE p.id = (?) ");
-                }
+        // if (sort == "tree") {
+        //     if (since != null) {
+        //         // if (desc) {
+        //         //     mquery.append("AND path < (SELECT p.path FROM posts p WHERE p.id = (?) ");
+        //         // }
 
-                if (!desc) {
-                    mquery.append("AND path < (SELECT p.path FROM posts p WHERE p.id = (?) ");
-                }    
-            }
+        //         // if (!desc) {
+        //         //     mquery.append("AND path < (SELECT p.path FROM posts p WHERE p.id = (?) ");
+        //         // }    
+        //     }
 
-            if (desc) {
-                mquery.append("ORDER BY path DESC "); 
-            }
+        //     // if (desc) {
+        //     //     mquery.append("ORDER BY path DESC "); 
+        //     // }
 
-            if (!desc) {
-                mquery.append("ORDER BY path ASC ");
-            }
+        //     // if (!desc) {
+        //     //     mquery.append("ORDER BY path ASC ");
+        //     // }
             
-            mquery.append("LIMIT (?)");
+        //     mquery.append("LIMIT (?)");
 
-            return this.jdbcTemplate.query(mquery.toString(), PostList, id, id,  limit);
-        }
+        //     return this.jdbcTemplate.query(mquery.toString(), PostList, id, id,  limit);
+        // }
 
        
 
