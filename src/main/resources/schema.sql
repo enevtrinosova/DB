@@ -57,12 +57,8 @@ OIDS=FALSE
 
 
 CREATE TABLE "votes" (
-  "vID" serial NOT NULL,
-  "threads" BIGINT,
-  "user" CITEXT,
-  "voice" BIGINT,
-  CONSTRAINT votes_pk PRIMARY KEY ("vID")
-) WITH (
-OIDS=FALSE
-);
+  "thread" CITEXT,
+  "nickname" CITEXT,
+  UNIQUE("thread", "nickname"),
+  "voice" BIGINT);
 

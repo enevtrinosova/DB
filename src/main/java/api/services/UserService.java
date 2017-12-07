@@ -40,7 +40,6 @@ public class UserService {
         );
     }
 
-    //ошибка в этом методе
 
     public User setInf(String nickname, User user) {
         String sql = "UPDATE users SET " +

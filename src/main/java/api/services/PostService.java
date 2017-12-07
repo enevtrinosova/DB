@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.ZonedDateTime;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.lang.Long;
 import java.time.format.DateTimeFormatter;
 import org.springframework.dao.EmptyResultDataAccessException;
 
@@ -20,6 +21,7 @@ public class PostService {
     private JdbcTemplate jdbcTemplate;
     private UserService userService;
     
+    // @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     public RowMapper<Post> PostList = (rs, rowNum) -> new Post(
         rs.getLong("id"), rs.getString("author"), rs.getString("forum"),
         LocalDateTime.ofInstant(rs.getTimestamp("created").toInstant(), ZoneOffset.ofHours(0))
@@ -83,6 +85,49 @@ public class PostService {
         }
 
         return createdPosts;
+
+    }
+
+    public List<Post> getPosts(Long id, String sort, Integer limit, String since, boolean desc) {
+        StringBuilder mquery = new StringBuilder();
+        mquery.append("SELECT p.id, p.author, p.forum, p.created, p.isEddited, p.thread, p.message, p.parent FROM posts p WHERE p.thread = (?) ");
+
+        if(since != null && sort == "flat") {
+           mquery.append("AND t.created > '").append(since).append("'::TIMESTAMPTZ ORDER BY t.created DESC ");
+        } 
+
+        
+
+        if (sort == "tree") {
+            if (since != null) {
+                if (desc) {
+                    mquery.append("AND path < (SELECT p.path FROM posts p WHERE p.id = (?) ");
+                }
+
+                if (!desc) {
+                    mquery.append("AND path < (SELECT p.path FROM posts p WHERE p.id = (?) ");
+                }    
+            }
+
+            if (desc) {
+                mquery.append("ORDER BY path DESC "); 
+            }
+
+            if (!desc) {
+                mquery.append("ORDER BY path ASC ");
+            }
+            
+            mquery.append("LIMIT (?)");
+
+            return this.jdbcTemplate.query(mquery.toString(), PostList, id, id,  limit);
+        }
+
+       
+
+        mquery.append("LIMIT (?)");
+
+        return this.jdbcTemplate.query(mquery.toString(), PostList, id, limit);
+
 
     }
 }

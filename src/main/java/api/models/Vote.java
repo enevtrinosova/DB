@@ -1,43 +1,45 @@
 package api.models;
 
-/**
- * Created by evgenia on 14.10.17.
- */
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Vote {
 
-    private long vID;
-    private String user;
-    private long thread;
+    // private long id;
+    private String nickname;
+    private String thread;
     private int voice;
 
-    public Vote(long vID, String user, long thread, int voice) {
-        this.vID = vID;
-        this.user = user;
+    @JsonCreator
+    public Vote(@JsonProperty("nickname")String nickname,@JsonProperty("thread") String thread,
+                @JsonProperty("voice") int voice) {
+        // this.id = id;
+        this.nickname = nickname;
         this.thread = thread;
         this.voice = voice;
     }
 
-    public long getvID() {
-        return vID;
+    // public long getid() {
+    //     return id;
+    // }
+
+    // public void setid(long id) {
+    //     this.id = id;
+    // }
+
+    public String getNickname() {
+        return nickname;
     }
 
-    public void setvID(long vID) {
-        this.vID = vID;
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public long getThread() {
+    public String getThread() {
         return thread;
     }
 
-    public void setThread(long thread) {
+    public void setThread(String thread) {
         this.thread = thread;
     }
 

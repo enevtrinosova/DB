@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 public class Post implements RowMapper<Post>{
 
@@ -16,9 +18,11 @@ public class Post implements RowMapper<Post>{
     private long thread;
     private String message;
     private Long parent;
-
+    // public List<Long> path;
+   
+    // @SuppressWarnings("unchecked")
     @JsonCreator
-    public Post(@JsonProperty("id")long id, @JsonProperty("author")String author, 
+    public <T> Post(@JsonProperty("id")long id, @JsonProperty("author")String author, 
                 @JsonProperty("forum")String forum, @JsonProperty("created")String created, 
                 @JsonProperty("iseddited")boolean isEddited,
                 @JsonProperty("thread")long thread, @JsonProperty("message")String message, 
@@ -31,7 +35,10 @@ public class Post implements RowMapper<Post>{
         this.thread = thread;
         this.message = message;
         this.parent = parent;
-    }
+
+        // this.path = (List<Long>)path;
+        
+}
 
     public Post() {}
 
@@ -99,6 +106,14 @@ public class Post implements RowMapper<Post>{
         this.parent = parent;
     }
 
+    // public List<Long> getPath() {
+    //     return path;
+    // }
+    // public void setPath(List<Long> path) {
+    //     this.path = path;
+    // }
+
+ 
     @Override
     public Post mapRow(ResultSet resultSet, int i) throws SQLException {
         return new Post(
@@ -110,6 +125,8 @@ public class Post implements RowMapper<Post>{
                 resultSet.getLong("thread"),
                 resultSet.getString("message"),
                 resultSet.getLong("parent")
+                
+                // Arrays.asList(resultSet.getArray("path"))
         );
     }
 }

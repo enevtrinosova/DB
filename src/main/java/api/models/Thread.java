@@ -15,7 +15,7 @@ public class Thread {
     private long votes;
 
     @JsonCreator
-    public Thread(@JsonProperty("id") Long id, @JsonProperty("forum")String forum, @JsonProperty("author")String author, 
+    public Thread(@JsonProperty("id") Long id, @JsonProperty("forum") String forum, @JsonProperty("author") String author, 
                   @JsonProperty("slug")String slug, @JsonProperty("created")String created, 
                   @JsonProperty("message")String message, 
                   @JsonProperty("title")String title, @JsonProperty("votes")long votes) {

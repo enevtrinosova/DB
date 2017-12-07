@@ -4,6 +4,7 @@ import api.models.Thread;
 import api.models.Forum;
 import api.models.User;
 import api.models.Post;
+import api.models.Vote;
 import api.services.ThreadService;
 import api.services.ForumService;
 import api.services.UserService;
@@ -42,10 +43,6 @@ public class ThreadController {
     public ResponseEntity<?> createPost(@RequestBody List<Post> posts, @PathVariable String slug_or_id) {
         try {
             Thread findThread = threadService.getThreadBySlugOrId(slug_or_id);
-
-            System.out.println("****************THEAD************");
-            System.out.println(findThread.getid());
-
             List<Post> createdPosts = postService.createListOfPosts(findThread, posts);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdPosts);
         } catch (EmptyResultDataAccessException e) {
@@ -54,4 +51,48 @@ public class ThreadController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new Throwable(e.getMessage()));
         }
     }
+
+    @PostMapping("/{slug_or_id}/vote")
+    public ResponseEntity<?> setVote(@RequestBody Vote vote, @PathVariable String slug_or_id) {
+        try {
+            Thread changeThread = threadService.setThreadVote(vote, slug_or_id);
+            
+            return ResponseEntity.ok(changeThread);
+        } catch(EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("This thread not found"));
+        }
+    }
+
+
+    @GetMapping("/{slug_or_id}/details")
+    public ResponseEntity<?> threadDetails(@PathVariable String slug_or_id) {
+        try {
+            return ResponseEntity.ok(this.threadService.getThreadBySlugOrId(slug_or_id));
+        } catch(EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("This thread not found"));
+        }
+    } 
+
+    @GetMapping("/{slug_or_id}/posts")
+    public ResponseEntity<?> getPosts(@PathVariable String slug_or_id,
+                                      @RequestParam(value="sort", defaultValue="flat") String sort,
+                                      @RequestParam(value="limit", defaultValue="100") Integer limit, 
+                                      @RequestParam(value="since", required=false) String since,
+                                      @RequestParam(value="desc", required=true) boolean desc) {
+        try {
+            Thread findThread = this.threadService.getThreadBySlugOrId(slug_or_id);
+
+            return ResponseEntity.ok(this.postService.getPosts(findThread.getid(), sort, limit, since, desc)); 
+
+        } catch(EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("This thread not found"));
+        }
+    }
+
+    
 }
+
+
+    
+    
+
