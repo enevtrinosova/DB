@@ -50,6 +50,7 @@ CREATE TABLE "posts" (
   "thread" BIGINT ,
   "message" CITEXT,
   "parent" BIGINT,
+  "path" BIGINT [] NOT NULL,
   CONSTRAINT posts_pk PRIMARY KEY ("id")
 ) WITH (
 OIDS=FALSE

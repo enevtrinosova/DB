@@ -11,10 +11,19 @@ import java.time.ZonedDateTime;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.lang.Long;
+
 import java.time.format.DateTimeFormatter;
 import org.springframework.dao.EmptyResultDataAccessException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 @Repository
 public class PostService {
@@ -30,21 +39,29 @@ public class PostService {
         rs.getLong("thread"), rs.getString("message"),
         rs.getLong("parent"));
 
+        public RowMapper<Long> LongList = (rs, rowNum) -> new Long(rs.getLong("path"));
+
     @Autowired
     public PostService(JdbcTemplate jdbcTemplate, UserService userService) {
         this.jdbcTemplate = jdbcTemplate;
         this.userService = userService;
     }
 
+    public List<Long> getPathFromId(Long id) {
+        return this.jdbcTemplate.query("SELECT p.path FROM posts p WHERE p.id = (?)", LongList, id);
+    }
 
-    public List<Post> createListOfPosts(Thread thread, List<Post> posts) {
+    public List<Post> createListOfPosts(Thread thread, List<Post> posts) throws SQLException {
         String created = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
        
 
-        String mquery = "INSERT INTO posts (id, forum, author, created, iseddited, thread, message, parent)" +
+        String mquery = "INSERT INTO posts (id, forum, author, created, iseddited, thread, message, parent, path)" +
                         " VALUES (?, (SELECT f.slug FROM forums f WHERE lower(f.slug) = lower(?)), " +
-                        "(SELECT u.nickname FROM users u WHERE lower(u.nickname) = lower(?)), (?::TIMESTAMPTZ), ?, ?, ?, ?) RETURNING *";
+                        "(SELECT u.nickname FROM users u WHERE lower(u.nickname) = lower(?)), (?::TIMESTAMPTZ), ?, ?, ?, ?, ?) RETURNING *";
                         
+        try(Connection conn = jdbcTemplate.getDataSource().getConnection(); 
+            PreparedStatement preparedStatement = conn.prepareStatement(mquery)) {
+        
         String threadForum = thread.getForum();
 
         System.out.println(threadForum);
@@ -79,19 +96,44 @@ public class PostService {
             System.out.println(curPost.getAuthor());
             System.out.println(thread.getid());
 
-            createdPosts.add(jdbcTemplate.queryForObject(mquery, PostList, ID, threadForum, 
-                             userService.getInf(curPost.getAuthor()).getNickname(), created, false, thread.getid(),
-                             curPost.getMessage(), curPost.getParent()));
+            List<Long> path = new ArrayList<>();
+
+            if (curPost.getParent() != null) {
+                path = this.getPathFromId(curPost.getParent());
+            }           
+            
+            path.add(curPost.getid());
+
+            Object arr = conn.createArrayOf("BIGINT", path.toArray());
+
+            preparedStatement.setLong(1, ID);
+            preparedStatement.setString(2, threadForum);
+            preparedStatement.setString(3, userService.getInf(curPost.getAuthor()).getNickname());
+            preparedStatement.setString(4, created);
+            preparedStatement.setBoolean(5, false);
+            preparedStatement.setLong(6, thread.getid());
+            preparedStatement.setString(7, curPost.getMessage());
+            preparedStatement.setLong(8, curPost.getParent());
+            preparedStatement.setObject(9, arr);
+
+            preparedStatement.executeQuery();
+
+            // createdPosts.add(jdbcTemplate.queryForObject(mquery, PostList, ID, threadForum, 
+            //                  userService.getInf(curPost.getAuthor()).getNickname(), created, false, thread.getid(),
+            //                  curPost.getMessage(), curPost.getParent(), arr));
         }
+    
 
         return createdPosts;
+    }
 
     }
 
-    public List<Post> getPosts(Long id, String sort, Integer limit, String since, boolean desc) {
+    public List<Post> getPosts (Long id, String sort, Integer limit, String since, boolean desc) {
         StringBuilder mquery = new StringBuilder();
         mquery.append("SELECT p.id, p.author, p.forum, p.created, p.isEddited, p.thread, p.message, p.parent FROM posts p WHERE p.thread = (?) ");
 
+        
 
         if (Objects.equals(sort, "flat")) {
             if (since != null) {
@@ -107,37 +149,38 @@ public class PostService {
             } 
             
         }
-       
-            
-        
 
         
+       if (Objects.equals(sort, "tree")) {
 
-        // if (sort == "tree") {
-        //     if (since != null) {
-        //         // if (desc) {
-        //         //     mquery.append("AND path < (SELECT p.path FROM posts p WHERE p.id = (?) ");
-        //         // }
+            System.out.println("TREEEEEEEE");
+            System.out.println(since);
 
-        //         // if (!desc) {
-        //         //     mquery.append("AND path < (SELECT p.path FROM posts p WHERE p.id = (?) ");
-        //         // }    
-        //     }
+            if (since != null) {
+                if (desc) {
+                    mquery.append("AND path < (SELECT p.path FROM posts p WHERE p.id = (?) ").append(since);
+                }
 
-        //     // if (desc) {
-        //     //     mquery.append("ORDER BY path DESC "); 
-        //     // }
+                if (!desc) {
+                    mquery.append("AND path > (SELECT p.path FROM posts p WHERE p.id = (?) ").append(since);
+                }    
+            }
 
-        //     // if (!desc) {
-        //     //     mquery.append("ORDER BY path ASC ");
-        //     // }
+            System.out.println(desc);
+
+            if (desc) {
+                mquery.append("ORDER BY p.path DESC "); 
+            }
+
+            if (!desc) {
+                mquery.append("ORDER BY p.path ASC ");
+            }
             
-        //     mquery.append("LIMIT (?)");
+            mquery.append("LIMIT (?)");
 
-        //     return this.jdbcTemplate.query(mquery.toString(), PostList, id, id,  limit);
-        // }
-
-       
+            return this.jdbcTemplate.query(mquery.toString(), PostList, id, limit);
+        }
+            
 
         mquery.append("LIMIT (?)");
 
