@@ -15,6 +15,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.sql.SQLException;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
@@ -46,8 +48,12 @@ public class ThreadController {
             List<Post> createdPosts = postService.createListOfPosts(findThread, posts);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdPosts);
         } catch (EmptyResultDataAccessException e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("This thread not found"));
         }  catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new Throwable(e.getMessage()));
+        } catch (SQLException e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new Throwable(e.getMessage()));
         }
     }
@@ -82,10 +88,8 @@ public class ThreadController {
                                       {
         try {
             Thread findThread = this.threadService.getThreadBySlugOrId(slug_or_id);
-            System.out.println(findThread.getid());
 
-            System.out.println(sort);
-            return ResponseEntity.ok(this.postService.getPosts(findThread.getid(), sort, limit, since, desc)); 
+            return ResponseEntity.ok(this.postService.getPosts(findThread.getid(), sort, limit, since, desc));
 
         } catch(EmptyResultDataAccessException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("This thread not found"));
