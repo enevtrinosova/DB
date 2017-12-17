@@ -79,6 +79,17 @@ public class ThreadController {
         }
     } 
 
+    @PostMapping("/{slug_or_id}/details")
+    public ResponseEntity<?> setThreadInformation(@PathVariable String slug_or_id, @RequestBody Thread thread) {
+        try {
+            Thread notUpdateThread = this.threadService.getThreadBySlugOrId(slug_or_id);
+
+            return ResponseEntity.ok(this.threadService.setInformation(notUpdateThread, thread));
+        } catch(EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("This thread not found"));
+        }
+    } 
+
     @GetMapping("/{slug_or_id}/posts")
     public ResponseEntity<?> getPosts(@PathVariable String slug_or_id,
                                       @RequestParam(value="sort", defaultValue="flat") String sort,

@@ -138,7 +138,35 @@ public class ThreadService {
     }
 
     
+    // public User setInf(String nickname, User user) {
+    //     String sql = "UPDATE users SET " +
+    //             "fullname = COALESCE(?, fullname)," +
+    //             "email = COALESCE(?, email)," +
+    //             "about = COALESCE(?, about) " +
+    //             "WHERE lower(nickname) = lower(?) RETURNING *";
 
+    //     return this.jdbcTemplate.queryForObject(sql, UserList,
+    //             user.getFullname(), user.getEmail(), user.getAbout(), nickname);
 
-   
+    // }
+
+    public Thread setInformation(Thread notUpdateThread, Thread thread) {
+        
+        StringBuilder sql = new StringBuilder();
+        sql.append("UPDATE threads SET message = (?), title = (?) ");
+
+        if (thread.getMessage() != null) {
+            notUpdateThread.setMessage(thread.getMessage());
+        }
+    
+        if (thread.getTitle() != null) {
+            notUpdateThread.setTitle(thread.getTitle());
+        }
+
+        sql.append("WHERE id = (?) RETURNING *");
+
+        return this.jdbcTemplate.queryForObject(sql.toString(), ThreadList, notUpdateThread.getMessage(), notUpdateThread.getTitle(), notUpdateThread.getid());
+
+                     
+    }   
 }
