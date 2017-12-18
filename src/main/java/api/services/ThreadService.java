@@ -30,6 +30,11 @@ public class ThreadService {
         rs.getString("message"), rs.getString("title"),
         rs.getLong("votes"));
 
+    public RowMapper<Forum> ForumList = (rs, rowNum) -> new Forum(
+        rs.getString("slug"), rs.getString("title"),
+        rs.getString("user"), rs.getLong("posts"), rs.getLong("threads"));
+    
+
     public RowMapper<Vote> VoteList = (rs, rowNum) -> new Vote(
         rs.getString("nickname"), rs.getString("thread"), rs.getInt("voice"));
            
@@ -41,12 +46,21 @@ public class ThreadService {
     }
 
     public Thread create(String forum, Thread thread, String user) {
-        return this.jdbcTemplate.queryForObject(
+        
+        Thread newThread = this.jdbcTemplate.queryForObject(
                 "INSERT INTO threads (forum, author, slug, created, message, title) VALUES (?, ?, ?, COALESCE(?::TIMESTAMPTZ, current_timestamp), ?, ?) RETURNING *",
                 ThreadList, 
                 forum, user, thread.getSlug(), thread.getCreated(),   
                 thread.getMessage(), thread.getTitle()
         );
+
+       
+
+        this.jdbcTemplate.update("UPDATE forums SET threads = threads + 1 WHERE lower(slug) = lower(?)", forum);
+
+
+        return newThread;
+
     }
 
     public Thread getThreadBySlugOrId(String slug_or_id) {

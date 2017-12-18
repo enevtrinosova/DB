@@ -126,6 +126,8 @@ public class PostService {
 
             conn.close();
 
+            this.jdbcTemplate.update("UPDATE forums SET posts = posts + (?) WHERE lower(slug) = lower(?)", posts.size(), thread.getForum());
+ 
             return posts;
         }
 

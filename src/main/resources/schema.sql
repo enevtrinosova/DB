@@ -20,8 +20,8 @@ CREATE TABLE "forums" (
   "slug" CITEXT NOT NULL UNIQUE,
   "title" CITEXT NOT NULL,
   "user" CITEXT NOT NULL,
-  "posts" BIGINT,
-  "threads" BIGINT,
+  "posts" BIGINT DEFAULT 0,
+  "threads" BIGINT DEFAULT 0,
   CONSTRAINT forums_pk PRIMARY KEY ("fID")
 ) WITH (
 OIDS=FALSE
