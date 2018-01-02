@@ -120,40 +120,35 @@ public class ThreadService {
     }
 
     public Thread setThreadVote(Vote vote, String slug_or_id) {
+
         Thread findThread = this.getThreadBySlugOrId(slug_or_id);
 
-        User user = userService.getInf(vote.getNickname());
-        if (findThread == null || user == null) {
-            return null;
-        }
+        User findUser = userService.getInf(vote.getNickname());
 
+
+        String returnSql = "UPDATE threads SET votes = ? WHERE id = ? RETURNING *";
 
         try {
-            String voice = "SELECT * FROM votes v WHERE lower(v.thread) = lower(?) AND lower(v.nickname) = lower(?)";
-            Vote searchVote = this.jdbcTemplate.queryForObject(voice, VoteList, findThread.getSlug(), vote.getNickname());
+            String voice = "SELECT * FROM votes v WHERE v.thread = ? AND lower(v.nickname) = lower(?)";
+            Vote searchVote = this.jdbcTemplate.queryForObject(voice, VoteList, findThread.getid(), vote.getNickname());
             String updateSql = "UPDATE votes SET voice = (?) WHERE nickname = (?) AND thread = (?)";
 
 
-            this.jdbcTemplate.update(updateSql, vote.getVoice(), vote.getNickname(), findThread.getSlug());
+            this.jdbcTemplate.update(updateSql, vote.getVoice(), findUser.getNickname(), findThread.getid());
 
+            findThread.setVotes(findThread.getVotes() + vote.getVoice() - searchVote.getVoice());
 
-            String returnSql = "UPDATE threads SET votes = (SELECT SUM(voice) FROM votes WHERE thread = (?)) WHERE slug = (?) RETURNING *";
-
-            return this.jdbcTemplate.queryForObject(returnSql, ThreadList, findThread.getSlug(), findThread.getSlug());
+            return this.jdbcTemplate.queryForObject(returnSql, ThreadList, findThread.getVotes(), findThread.getid());
         } catch (EmptyResultDataAccessException err) {
-
-
             String updateSql = "INSERT INTO votes (nickname, thread, voice)" +
                     "VALUES (?, ?, ?)";
 
-            this.jdbcTemplate.update(updateSql, vote.getNickname(), findThread.getSlug(), vote.getVoice());
+            this.jdbcTemplate.update(updateSql, findUser.getNickname(), findThread.getid(), vote.getVoice());
 
-            String returnSql = "UPDATE threads SET votes = (SELECT SUM(voice) FROM votes WHERE thread = (?)) WHERE slug = (?) RETURNING *";
+            findThread.setVotes(findThread.getVotes() + vote.getVoice());
 
-
-            return this.jdbcTemplate.queryForObject(returnSql, ThreadList, findThread.getSlug(), findThread.getSlug());
+            return this.jdbcTemplate.queryForObject(returnSql, ThreadList, findThread.getVotes(), findThread.getid());
         }
-
     }
 
     public Thread setInformation(Thread notUpdateThread, Thread thread) {

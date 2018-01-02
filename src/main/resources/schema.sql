@@ -5,11 +5,10 @@ DROP TABLE IF EXISTS "posts" CASCADE ;
 DROP TABLE IF EXISTS "votes" CASCADE ;
 DROP TABLE IF EXISTS "forum_members" CASCADE ;
 
-
 CREATE TABLE "users" (
   "uID" serial NOT NULL,
-  "email" CITEXT NOT NULL UNIQUE,
-  "nickname" CITEXT NOT NULL UNIQUE,
+  "email" CITEXT NOT NULL,
+  "nickname" CITEXT NOT NULL,
   "fullname" TEXT,
   "about" TEXT,
   CONSTRAINT users_pk PRIMARY KEY ("uID")
@@ -17,9 +16,14 @@ CREATE TABLE "users" (
 OIDS=FALSE
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_index ON users (LOWER(email));
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_nickname_index ON users (LOWER(nickname));
+
+
 CREATE TABLE "forums" (
   "fID" serial NOT NULL,
-  "slug" CITEXT NOT NULL UNIQUE,
+  "slug" CITEXT NOT NULL,
   "title" TEXT NOT NULL,
   "user" TEXT NOT NULL,
   "posts" BIGINT DEFAULT 0,
@@ -29,11 +33,13 @@ CREATE TABLE "forums" (
 OIDS=FALSE
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS forums_slug_index ON forums (LOWER(slug));
+
 CREATE TABLE "threads" (
   "id" serial NOT NULL,
   "forum" CITEXT,
   "author" TEXT,
-  "slug" CITEXT UNIQUE,
+  "slug" CITEXT,
   "created" TIMESTAMPTZ,
   "message" TEXT,
   "title" TEXT,
@@ -42,6 +48,10 @@ CREATE TABLE "threads" (
 ) WITH (
 OIDS=FALSE
 );
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS threads_slug_index ON threads (LOWER(slug));
+
 
 CREATE TABLE "posts" (
   "id" serial NOT NULL,
@@ -60,7 +70,7 @@ OIDS=FALSE
 
 
 CREATE TABLE "votes" (
-  "thread" CITEXT,
+  "thread" BIGINT,
   "nickname" CITEXT,
   UNIQUE("thread", "nickname"),
   "voice" BIGINT);
