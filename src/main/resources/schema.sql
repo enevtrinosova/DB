@@ -49,9 +49,7 @@ CREATE TABLE "threads" (
 OIDS=FALSE
 );
 
-
 CREATE UNIQUE INDEX IF NOT EXISTS threads_slug_index ON threads (LOWER(slug));
-
 
 CREATE TABLE "posts" (
   "id" serial NOT NULL,
@@ -68,16 +66,23 @@ CREATE TABLE "posts" (
 OIDS=FALSE
 );
 
+CREATE INDEX IF NOT EXISTS posts_thread_index ON posts (thread);
+CREATE INDEX IF NOT EXISTS posts_parent_index ON posts (parent);
+CREATE INDEX IF NOT EXISTS posts_parent_index ON posts (path);
+
+
 
 CREATE TABLE "votes" (
   "thread" BIGINT,
   "nickname" CITEXT,
-  UNIQUE("thread", "nickname"),
   "voice" BIGINT);
+
+CREATE UNIQUE INDEX IF NOT EXISTS votes_index ON votes (thread, nickname);
 
 
 CREATE TABLE "forum_members" (
   forum  CITEXT,
-  member CITEXT,
-UNIQUE ("forum", "member")
-);
+  member CITEXT
+  );
+
+CREATE UNIQUE INDEX IF NOT EXISTS forum_members_index ON forum_members (forum, member);
