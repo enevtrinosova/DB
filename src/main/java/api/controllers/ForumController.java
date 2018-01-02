@@ -68,6 +68,20 @@ public class ForumController {
         }
     }
 
+    @GetMapping("/{slug}/users")
+    public ResponseEntity<?> getForumUsers(@PathVariable String slug,
+                                             @RequestParam(value="desc", defaultValue="false") boolean desc,
+                                             @RequestParam(value="limit", defaultValue="100") Integer limit,
+                                             @RequestParam(value="since", required=false) String since) {
+        try {
+            String foundslug = forumService.getSlug(slug);
+            List<User> foundUsers = this.userService.getForumUsers(foundslug, desc, limit, since);
+            return ResponseEntity.ok(foundUsers);
+        } catch (EmptyResultDataAccessException err) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Throwable("Not found such forum"));
+        }
+    }
+
     @PostMapping("/{forum}/create")
     public ResponseEntity<?> createThread(@PathVariable String forum, @RequestBody Thread thread) {
         try {

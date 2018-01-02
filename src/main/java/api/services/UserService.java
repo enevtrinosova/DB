@@ -61,4 +61,29 @@ public class UserService {
 
     }
 
+
+    public List<User> getForumUsers(String slug, boolean desc, Integer limit, String since) {
+        StringBuilder mquery = new StringBuilder();
+        mquery.append("SELECT u.nickname, u.fullname, u.email, u.about FROM forum_members AS f_m " +
+                "JOIN users as u ON u.nickname = f_m.member AND f_m.forum = ?");
+
+        if(since != null) {
+            if(desc) {
+                mquery.append("AND u.nickname < '").append(since).append("'");
+            } else if (!desc) {
+                mquery.append("AND u.nickname > '").append(since).append("'");
+            }
+        }
+
+        if(desc) {
+            mquery.append(" ORDER BY u.nickname DESC ");
+        } else if(!desc) {
+            mquery.append(" ORDER BY u.nickname ASC ");
+        }
+
+        mquery.append(" LIMIT (?)");
+
+        return this.jdbcTemplate.query(mquery.toString(), UserList, slug, limit);
+    }
+
 }

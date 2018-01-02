@@ -118,8 +118,11 @@ public class PostService {
                 preparedStatement.setLong(8, curPost.getParent());
                 preparedStatement.setObject(9, pathArray);
 
-                preparedStatement.addBatch();
 
+                this.jdbcTemplate.update("INSERT INTO forum_members(forum, member) VALUES (?, ?) ON CONFLICT (forum, member) DO NOTHING", thread.getForum(), curPost.getAuthor());
+
+
+                preparedStatement.addBatch();
             }
 
             preparedStatement.executeBatch();
@@ -127,7 +130,7 @@ public class PostService {
             conn.close();
 
             this.jdbcTemplate.update("UPDATE forums SET posts = posts + (?) WHERE lower(slug) = lower(?)", posts.size(), thread.getForum());
- 
+
             return posts;
         }
 
@@ -227,5 +230,27 @@ public class PostService {
         return this.jdbcTemplate.query(mquery.toString(), PostList, id, limit);
 
 
+    }
+
+
+    public Post getPostById(String id) {
+        return this.jdbcTemplate.queryForObject(
+                "SELECT * FROM posts p WHERE p.id = (?)",
+                PostList,
+                Long.valueOf(id));
+    }
+
+    public Post setInformation(Post notUpdateThread, Post post) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("UPDATE posts SET message = (?)");
+
+        if (post.getMessage() != null && !notUpdateThread.getMessage().equals(post.getMessage())) {
+            notUpdateThread.setMessage(post.getMessage());
+            sql.append(", iseddited = true ");
+        }
+
+        sql.append("WHERE id = (?) RETURNING *");
+
+        return this.jdbcTemplate.queryForObject(sql.toString(), PostList, notUpdateThread.getMessage(), notUpdateThread.getid());
     }
 }

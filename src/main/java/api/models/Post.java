@@ -24,7 +24,7 @@ public class Post implements RowMapper<Post>{
     @JsonCreator
     public <T> Post(@JsonProperty("id")long id, @JsonProperty("author")String author, 
                 @JsonProperty("forum")String forum, @JsonProperty("created")String created, 
-                @JsonProperty("iseddited")boolean isEddited,
+                @JsonProperty("isEddited")boolean isEddited,
                 @JsonProperty("thread")long thread, @JsonProperty("message")String message, 
                 @JsonProperty("parent")Long parent) {
         this.id = id;
@@ -74,11 +74,11 @@ public class Post implements RowMapper<Post>{
         this.created = created;
     }
 
-    public boolean isEddited() {
+    public boolean getIsEdited() {
         return isEddited;
     }
 
-    public void setEddited(boolean eddited) {
+    public void setIsEdited(boolean eddited) {
         isEddited = eddited;
     }
 

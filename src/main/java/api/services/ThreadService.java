@@ -1,4 +1,5 @@
 package api.services;
+
 import api.models.Thread;
 import api.models.User;
 import api.models.Forum;
@@ -21,23 +22,23 @@ public class ThreadService {
     private JdbcTemplate jdbcTemplate;
 
     private UserService userService;
-    
+
     public RowMapper<Thread> ThreadList = (rs, rowNum) -> new Thread(
-        rs.getLong("id"), rs.getString("forum"), rs.getString("author"),
-        rs.getString("slug"), 
-        LocalDateTime.ofInstant(rs.getTimestamp("created").toInstant(), ZoneOffset.ofHours(0))
-        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")),
-        rs.getString("message"), rs.getString("title"),
-        rs.getLong("votes"));
+            rs.getLong("id"), rs.getString("forum"), rs.getString("author"),
+            rs.getString("slug"),
+            LocalDateTime.ofInstant(rs.getTimestamp("created").toInstant(), ZoneOffset.ofHours(0))
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")),
+            rs.getString("message"), rs.getString("title"),
+            rs.getLong("votes"));
 
     public RowMapper<Forum> ForumList = (rs, rowNum) -> new Forum(
-        rs.getString("slug"), rs.getString("title"),
-        rs.getString("user"), rs.getLong("posts"), rs.getLong("threads"));
-    
+            rs.getString("slug"), rs.getString("title"),
+            rs.getString("user"), rs.getLong("posts"), rs.getLong("threads"));
+
 
     public RowMapper<Vote> VoteList = (rs, rowNum) -> new Vote(
-        rs.getString("nickname"), rs.getString("thread"), rs.getInt("voice"));
-           
+            rs.getString("nickname"), rs.getString("thread"), rs.getInt("voice"));
+
 
     @Autowired
     public ThreadService(JdbcTemplate jdbcTemplate, UserService userService) {
@@ -46,17 +47,18 @@ public class ThreadService {
     }
 
     public Thread create(String forum, Thread thread, String user) {
-        
+
         Thread newThread = this.jdbcTemplate.queryForObject(
                 "INSERT INTO threads (forum, author, slug, created, message, title) VALUES (?, ?, ?, COALESCE(?::TIMESTAMPTZ, current_timestamp), ?, ?) RETURNING *",
-                ThreadList, 
-                forum, user, thread.getSlug(), thread.getCreated(),   
+                ThreadList,
+                forum, user, thread.getSlug(), thread.getCreated(),
                 thread.getMessage(), thread.getTitle()
         );
 
-       
 
-        this.jdbcTemplate.update("UPDATE forums SET threads = threads + 1 WHERE lower(slug) = lower(?)", forum);
+        this.jdbcTemplate.update("UPDATE forums SET threads = threads + 1 WHERE slug = ?", forum);
+
+        this.jdbcTemplate.update("INSERT INTO forum_members(forum, member) VALUES (?, ?) ON CONFLICT (forum, member) DO NOTHING", forum, user);
 
 
         return newThread;
@@ -64,17 +66,17 @@ public class ThreadService {
     }
 
     public Thread getThreadBySlugOrId(String slug_or_id) {
-        if(slug_or_id.matches("\\d+")) {
+        if (slug_or_id.matches("\\d+")) {
             return this.jdbcTemplate.queryForObject(
-                "SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE t.id = (?)",
-                ThreadList, 
-                Long.valueOf(slug_or_id)
+                    "SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE t.id = (?)",
+                    ThreadList,
+                    Long.valueOf(slug_or_id)
             );
         } else {
             return this.jdbcTemplate.queryForObject(
-                "SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE lower(t.slug) = lower(?)",
-                ThreadList, 
-                slug_or_id
+                    "SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE lower(t.slug) = lower(?)",
+                    ThreadList,
+                    slug_or_id
             );
         }
     }
@@ -83,96 +85,86 @@ public class ThreadService {
         StringBuilder mquery = new StringBuilder();
         mquery.append("SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE lower(t.forum) = lower(?) ");
 
-        if(since != null) {
-            if(desc) {
+        if (since != null) {
+            if (desc) {
                 mquery.append("AND t.created <= '").append(since).append("'::TIMESTAMPTZ ");
             } else if (!desc) {
                 mquery.append("AND t.created >= '").append(since).append("'::TIMESTAMPTZ ");
             }
         }
 
-        if(desc) {
+        if (desc) {
             mquery.append("ORDER BY t.created DESC ");
-        } else if(!desc) {
-            mquery.append("ORDER BY t.created ASC ");           
+        } else if (!desc) {
+            mquery.append("ORDER BY t.created ASC ");
         }
 
-        mquery.append("LIMIT (?)");    
+        mquery.append("LIMIT (?)");
 
         return this.jdbcTemplate.query(mquery.toString(), ThreadList, slug, limit);
     }
 
     public String getThreadSlug(String slug) {
-                return this.jdbcTemplate.queryForObject(
-                    "SELECT t.slug FROM threads t WHERE lower(t.slug) = lower(?)",
-                    String.class,
-                    slug
+        return this.jdbcTemplate.queryForObject(
+                "SELECT t.slug FROM threads t WHERE lower(t.slug) = lower(?)",
+                String.class,
+                slug
         );
+    }
+
+    public Thread getThreadById(Long id) {
+        return this.jdbcTemplate.queryForObject(
+                "SELECT t.id, t.slug, t.author, t.forum, t.created, t.message, t.title, t.votes FROM threads t WHERE t.id = (?)",
+                ThreadList,
+                id);
     }
 
     public Thread setThreadVote(Vote vote, String slug_or_id) {
         Thread findThread = this.getThreadBySlugOrId(slug_or_id);
-        
+
         User user = userService.getInf(vote.getNickname());
         if (findThread == null || user == null) {
             return null;
         }
-    
-        
+
+
         try {
             String voice = "SELECT * FROM votes v WHERE lower(v.thread) = lower(?) AND lower(v.nickname) = lower(?)";
-            Vote searchVote = this.jdbcTemplate.queryForObject(voice, VoteList, findThread.getSlug(), vote.getNickname()); 
+            Vote searchVote = this.jdbcTemplate.queryForObject(voice, VoteList, findThread.getSlug(), vote.getNickname());
             String updateSql = "UPDATE votes SET voice = (?) WHERE nickname = (?) AND thread = (?)";
 
-            
+
             this.jdbcTemplate.update(updateSql, vote.getVoice(), vote.getNickname(), findThread.getSlug());
 
 
             String returnSql = "UPDATE threads SET votes = (SELECT SUM(voice) FROM votes WHERE thread = (?)) WHERE slug = (?) RETURNING *";
-            
+
             return this.jdbcTemplate.queryForObject(returnSql, ThreadList, findThread.getSlug(), findThread.getSlug());
         } catch (EmptyResultDataAccessException err) {
 
 
             String updateSql = "INSERT INTO votes (nickname, thread, voice)" +
-            "VALUES (?, ?, ?)";
+                    "VALUES (?, ?, ?)";
 
             this.jdbcTemplate.update(updateSql, vote.getNickname(), findThread.getSlug(), vote.getVoice());
 
             String returnSql = "UPDATE threads SET votes = (SELECT SUM(voice) FROM votes WHERE thread = (?)) WHERE slug = (?) RETURNING *";
 
 
-
             return this.jdbcTemplate.queryForObject(returnSql, ThreadList, findThread.getSlug(), findThread.getSlug());
         }
 
-
-        // Vote vote = this.jdbcTemplate.queryForObject(search, ThreadList, vote.getVoice(), slug_or_id);
-       
     }
 
-    
-    // public User setInf(String nickname, User user) {
-    //     String sql = "UPDATE users SET " +
-    //             "fullname = COALESCE(?, fullname)," +
-    //             "email = COALESCE(?, email)," +
-    //             "about = COALESCE(?, about) " +
-    //             "WHERE lower(nickname) = lower(?) RETURNING *";
-
-    //     return this.jdbcTemplate.queryForObject(sql, UserList,
-    //             user.getFullname(), user.getEmail(), user.getAbout(), nickname);
-
-    // }
-
     public Thread setInformation(Thread notUpdateThread, Thread thread) {
-        
+
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE threads SET message = (?), title = (?) ");
 
         if (thread.getMessage() != null) {
             notUpdateThread.setMessage(thread.getMessage());
         }
-    
+
         if (thread.getTitle() != null) {
             notUpdateThread.setTitle(thread.getTitle());
         }
@@ -181,6 +173,6 @@ public class ThreadService {
 
         return this.jdbcTemplate.queryForObject(sql.toString(), ThreadList, notUpdateThread.getMessage(), notUpdateThread.getTitle(), notUpdateThread.getid());
 
-                     
-    }   
+
+    }
 }

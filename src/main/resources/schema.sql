@@ -3,13 +3,15 @@ DROP TABLE IF EXISTS "forums" CASCADE ;
 DROP TABLE IF EXISTS "threads" CASCADE;
 DROP TABLE IF EXISTS "posts" CASCADE ;
 DROP TABLE IF EXISTS "votes" CASCADE ;
+DROP TABLE IF EXISTS "forum_members" CASCADE ;
+
 
 CREATE TABLE "users" (
   "uID" serial NOT NULL,
   "email" CITEXT NOT NULL UNIQUE,
   "nickname" CITEXT NOT NULL UNIQUE,
-  "fullname" CITEXT,
-  "about" CITEXT,
+  "fullname" TEXT,
+  "about" TEXT,
   CONSTRAINT users_pk PRIMARY KEY ("uID")
 ) WITH (
 OIDS=FALSE
@@ -18,8 +20,8 @@ OIDS=FALSE
 CREATE TABLE "forums" (
   "fID" serial NOT NULL,
   "slug" CITEXT NOT NULL UNIQUE,
-  "title" CITEXT NOT NULL,
-  "user" CITEXT NOT NULL,
+  "title" TEXT NOT NULL,
+  "user" TEXT NOT NULL,
   "posts" BIGINT DEFAULT 0,
   "threads" BIGINT DEFAULT 0,
   CONSTRAINT forums_pk PRIMARY KEY ("fID")
@@ -30,11 +32,11 @@ OIDS=FALSE
 CREATE TABLE "threads" (
   "id" serial NOT NULL,
   "forum" CITEXT,
-  "author" CITEXT,
+  "author" TEXT,
   "slug" CITEXT UNIQUE,
   "created" TIMESTAMPTZ,
-  "message" CITEXT,
-  "title" CITEXT,
+  "message" TEXT,
+  "title" TEXT,
   "votes" BIGINT,
   CONSTRAINT threads_pk PRIMARY KEY ("id")
 ) WITH (
@@ -43,12 +45,12 @@ OIDS=FALSE
 
 CREATE TABLE "posts" (
   "id" serial NOT NULL,
-  "forum" CITEXT,
-  "author" CITEXT,
+  "forum" TEXT,
+  "author" TEXT,
   "created" TIMESTAMPTZ ,
   "iseddited" BOOLEAN,
   "thread" BIGINT ,
-  "message" CITEXT,
+  "message" TEXT,
   "parent" BIGINT,
   "path" BIGINT [] NOT NULL,
   CONSTRAINT posts_pk PRIMARY KEY ("id")
@@ -63,3 +65,9 @@ CREATE TABLE "votes" (
   UNIQUE("thread", "nickname"),
   "voice" BIGINT);
 
+
+CREATE TABLE "forum_members" (
+  forum  CITEXT,
+  member CITEXT,
+UNIQUE ("forum", "member")
+);

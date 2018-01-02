@@ -12,8 +12,8 @@ public class ForumService {
     private JdbcTemplate jdbcTemplate;
 
     public RowMapper<Forum> ForumList = (rs, rowNum) -> new Forum(
-        rs.getString("slug"), rs.getString("title"),
-        rs.getString("user"), rs.getLong("posts"), rs.getLong("threads"));
+            rs.getString("slug"), rs.getString("title"),
+            rs.getString("user"), rs.getLong("posts"), rs.getLong("threads"));
 
     @Autowired
     public ForumService(JdbcTemplate jdbcTemplate) {
@@ -29,18 +29,18 @@ public class ForumService {
 
     public Forum getInf(String slug) {
         return this.jdbcTemplate.queryForObject(
-                    "SELECT slug, title, \"user\", posts, threads FROM forums f " +
-                    "WHERE lower(f.slug) = lower(?) LIMIT 1",
-            new Forum(),
-            slug
-    );
+                "SELECT slug, title, \"user\", posts, threads FROM forums f " +
+                        "WHERE lower(f.slug) = lower(?) LIMIT 1",
+                new Forum(),
+                slug
+        );
     }
 
     public String getSlug(String slug) {
         return this.jdbcTemplate.queryForObject(
-                    "SELECT f.slug FROM forums f WHERE lower(f.slug) = lower(?)",
-                    String.class,
-                    slug
+                "SELECT f.slug FROM forums f WHERE lower(f.slug) = lower(?)",
+                String.class,
+                slug
         );
     }
 
