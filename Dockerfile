@@ -37,6 +37,6 @@ ADD ./ $APP
 WORKDIR $APP
 RUN mvn package
 
-EXPOSE 5000
+EXPOSE 80
 
 CMD service postgresql start && java -Xmx300M -Xmx300M -jar $APP/target/db-1.0-SNAPSHOT.jar
